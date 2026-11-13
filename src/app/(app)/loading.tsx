@@ -1,0 +1,3 @@
+export default function AppLoading() {
+  return <div className="content" aria-busy="true"><div className="page-heading"><div><div className="eyebrow">Loading workspace</div><h1>Pulling the latest context.</h1><p className="muted">Checking access and assembling your operational view…</p></div></div><div className="kpi-grid">{[1, 2, 3, 4].map((item) => <div className="panel kpi" key={item}><div className="skeleton skeleton-label" /><div className="skeleton skeleton-value" /><div className="skeleton skeleton-line" /></div>)}</div><div className="two-column"><div className="panel skeleton-panel" /><div className="panel skeleton-panel" /></div></div>;
+}

@@ -1,0 +1,65 @@
+name: ChangeGraph CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.7-bookworm
+        env:
+          POSTGRES_DB: changegraph
+          POSTGRES_USER: changegraph
+          POSTGRES_PASSWORD: ci-postgres-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U changegraph -d changegraph"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      AUTH_SECRET: ci-only-secret-that-is-long-enough-for-tests
+      CHANGEGRAPH_DB_PATH: ${{ runner.temp }}/changegraph.db
+      CHANGEGRAPH_SEED_DEMO: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Verify PostgreSQL schema, identity, event queue, and tenant constraints
+        env:
+          DATABASE_URL: postgresql://changegraph:ci-postgres-password@localhost:5432/changegraph
+        run: npm run test:postgres
+      - name: Replay seeded incident evaluation gate
+        run: npm run eval:gate
+      - name: Exercise local account lifecycle
+        run: npm run test:auth-flows
+      - run: npm audit --omit=dev
+      - run: npm run build
+      - name: Install Chromium for browser checks
+        run: npx playwright install --with-deps chromium
+      - name: Start production server
+        run: npm run start > next-start.log 2>&1 &
+      - name: Start event worker
+        run: npm run worker:events > worker.log 2>&1 &
+      - name: Run production smoke flow
+        env:
+          SMOKE_REQUIRE_WORKER: "true"
+        run: npm run test:smoke
+      - name: Run browser and accessibility checks
+        env:
+          BASE_URL: http://localhost:3000
+        run: npm run test:browser

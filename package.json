@@ -1,0 +1,54 @@
+{
+  "name": "changegraph-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test \"tests/**/*.test.ts\"",
+    "test:browser": "playwright test",
+    "backup:db": "node scripts/backup-db.mjs",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run eval:gate && npm run test:auth-flows && npm audit --omit=dev && npm run build",
+    "test:smoke": "node scripts/smoke.mjs",
+    "eval:gate": "tsx scripts/evaluation-gate.ts",
+    "test:auth-flows": "node scripts/auth-flow-smoke.mjs",
+    "test:postgres": "tsx scripts/postgres-storage-check.ts",
+    "worker:events": "tsx src/worker.ts"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "^4.0.142",
+    "ai": "^7.0.169",
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.4.1",
+    "geist": "^1.9.2",
+    "jose": "^6.1.0",
+    "lucide-react": "^0.548.0",
+    "next": "16.4.6",
+    "pg": "^8.23.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tsx": "^4.23.15",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "es-abstract": "^1.24.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5"
+  }
+}
