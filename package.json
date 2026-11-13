@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "prebuild": "node scripts/check-vercel-readiness.mjs",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
