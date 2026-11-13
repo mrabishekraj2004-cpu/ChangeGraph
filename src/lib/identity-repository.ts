@@ -62,6 +62,18 @@ async function loadSqliteIdentityStore(): Promise<IdentityStore> {
   };
 }
 
+async function loadPostgresIdentityStore(connectionString: string): Promise<IdentityStore> {
+  const { createPostgresPool, runPostgresIdentityMigrations, createPostgresIdentityStore } = await import("./postgres-identity-store");
+  const pool = createPostgresPool(connectionString);
+  try {
+    await runPostgresIdentityMigrations(pool);
+    return createPostgresIdentityStore(pool);
+  } catch (error) {
+    await pool.end();
+    throw error;
+  }
+}
+
 export function createIdentityRepository(loadStore: () => Promise<IdentityStore>): IdentityRepository {
   let storePromise: Promise<IdentityStore> | undefined;
   const getStore = () => storePromise ??= loadStore();
@@ -91,7 +103,20 @@ export function createIdentityRepository(loadStore: () => Promise<IdentityStore>
   };
 }
 
-// Identity and workspace consumers use async repository calls. The current
-// adapter delegates to SQLite; its implementation stays behind this boundary
-// while persistence is migrated in reviewable slices.
-export const identityRepository = createIdentityRepository(loadSqliteIdentityStore);
+export function createRuntimeIdentityRepository(
+  databaseUrl = process.env.DATABASE_URL,
+  loaders: {
+    sqlite: () => Promise<IdentityStore>;
+    postgres: (connectionString: string) => Promise<IdentityStore>;
+  } = { sqlite: loadSqliteIdentityStore, postgres: loadPostgresIdentityStore },
+  experimental = process.env.CHANGEGRAPH_POSTGRES_IDENTITY_EXPERIMENTAL,
+): IdentityRepository {
+  const connectionString = databaseUrl?.trim();
+  // Domain data still uses SQLite. Only an explicit experimental opt-in plus
+  // DATABASE_URL may switch identity storage; DATABASE_URL alone has no effect.
+  return createIdentityRepository(() => experimental === "true" && connectionString
+    ? loaders.postgres(connectionString)
+    : loaders.sqlite());
+}
+
+export const identityRepository = createRuntimeIdentityRepository();
