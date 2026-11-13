@@ -84,6 +84,8 @@ The event path is safe to run as a separate local worker with `npm run worker:ev
 
 Opt-in PostgreSQL migrations now cover identity, workspace-scoped domain tables, and tenant-enforcing relationships; a tested queue primitive covers idempotent event acceptance, claims, retries, dead letters, and lease fencing. The web app and worker still use SQLite; `DATABASE_URL` is only for these explicit schema/repository checks and does not switch runtime storage. See [docs/POSTGRES_MIGRATION.md](docs/POSTGRES_MIGRATION.md) for the isolated local setup and remaining migration boundary.
 
+Vercel deployment is not yet supported for the functional app: SQLite needs a shared durable volume and the event worker needs a running process. See [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md) for the readiness gate and future configuration inventory. No live Vercel service is implied by the build or demo UI.
+
 ## Remaining production work
 
 - Configure a verified email provider as the production default; keep the local one-time-link flow development-only.
